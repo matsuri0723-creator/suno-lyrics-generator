@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>歌詞生成ツール</title>
+    <script>
+        function generateLyrics() {
+            const title = document.getElementById("title").value;
+            const genre = document.getElementById("genre").value;
+            const mood = document.getElementById("mood").value;
+            const length = document.getElementById("length").value;
+            const aiChoice = document.querySelector('input[name="ai"]:checked').value;
+
+            alert(`生成中: 
+タイトル: ${title}
+ジャンル: ${genre}
+雰囲気: ${mood}
+楽曲の時間: ${length}分
+AI: ${aiChoice}`);
+            // ここに生成AIのAPIリクエストを組み込みます
+        }
+    </script>
+</head>
+<body>
+    <h1>歌詞＆スタイル生成ツール</h1>
+    <form onsubmit="event.preventDefault(); generateLyrics();">
+        <label for="title">タイトル:</label>
+        <input type="text" id="title" name="title" required><br>
+
+        <label for="genre">ジャンル:</label>
+        <input type="text" id="genre" name="genre" required><br>
+
+        <label for="mood">雰囲気:</label>
+        <select id="mood" name="mood">
+            <option value="bright">明るい</option>
+            <option value="passionate">情熱的</option>
+            <option value="calm">落ち着いた</option>
+            <option value="fantasy">幻想的</option>
+        </select><br>
+
+        <label for="instruments">使用する楽器:</label>
+        <input type="text" id="instruments" name="instruments"><br>
+
+        <label for="length">楽曲の時間 (分):</label>
+        <input type="range" id="length" name="length" min="1" max="10" value="3"><br>
+
+        <label for="ai">生成AIを選択:</label>
+        <input type="radio" id="openai" name="ai" value="OpenAI" required>OpenAI
+        <input type="radio" id="claude" name="ai" value="Claude" required>Claude<br>
+
+        <button type="submit">生成する</button>
+    </form>
+</body>
+</html>
