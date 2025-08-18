@@ -3,364 +3,407 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUNO AI楽曲生成ボット</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.js"></script>
+    <title>SUNO歌詞・スタイル生成ツール</title>
     <style>
-        .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: .5;
-            }
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
         }
-        .animate-spin {
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .mood-option {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            font-size: 0.9rem;
+        }
+
+        .mood-option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .mood-option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results {
+            display: none; /* 初期状態では非表示 */
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .result-box h3 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .lyrics-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            border-left: 4px solid #667eea;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px 5px 5px 0;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+        }
+
+        .loading {
+            display: none; /* 初期状態では非表示 */
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
             animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
 
         @keyframes spin {
-            from {
+            0% {
                 transform: rotate(0deg);
             }
-            to {
+            100% {
                 transform: rotate(360deg);
+            }
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .form-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .results {
+                grid-template-columns: 1fr;
+            }
+            
+            .mood-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
 </head>
-<body class="bg-gray-100 font-sans antialiased">
-    <div id="root"></div>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 SUNO歌詞・スタイル生成ツール</h1>
+            <p>タイトルとジャンルを入れるだけで、AIが歌詞とSUNOスタイルを生成します</p>
+        </div>
 
-    <script type="text/babel">
-        const { useState } = React;
-        const { Music, Copy, Download, Wand2, Sparkles, RefreshCw } = lucide;
+        <div class="form-section">
+            <div>
+                <div class="form-group">
+                    <label for="title">楽曲タイトル</label>
+                    <input type="text" id="title" placeholder="例：夏の思い出">
+                </div>
 
-        const SunoAISongGenerator = () => {
-            const [songTitle, setSongTitle] = useState('');
-            const [genre, setGenre] = useState('');
-            const [mood, setMood] = useState('');
-            const [customRequirements, setCustomRequirements] = useState('');
-            const [songLength, setSongLength] = useState('standard');
-            const [generatedOutput, setGeneratedOutput] = useState(null);
-            const [isGenerating, setIsGenerating] = useState(false);
-
-            const genreOptions = [
-                'ポップス', 'ロック', 'バラード', 'エレクトロニック', 'ヒップホップ', 'ジャズ', 'クラシック', 'その他'
-            ];
-
-            const moodOptions = [
-                '明るい', '悲しい', 'エネルギッシュ', '穏やか', 'ロマンチック', 'ダーク'
-            ];
-            
-            const jaToEn = {
-                'ポップス': 'J-Pop, Pop',
-                'ロック': 'Rock',
-                'バラード': 'Ballad',
-                'エレクトロニック': 'Electronic, EDM',
-                'ヒップホップ': 'Hip-Hop',
-                'ジャズ': 'Jazz',
-                'クラシック': 'Classical',
-                'その他': 'miscellaneous',
-
-                '明るい': 'upbeat, cheerful',
-                '悲しい': 'melancholic, sad',
-                'エネルギッシュ': 'energetic, powerful',
-                '穏やか': 'calm, relaxing',
-                'ロマンチック': 'romantic',
-                'ダーク': 'dark, mysterious',
-
-                'アコースティックギター': 'acoustic guitar',
-                'エレキギター': 'electric guitar',
-                'ピアノ': 'piano',
-                'シンセサイザー': 'synthesizer',
-                'オーケストラ': 'orchestral',
-                'ドラム': 'drums',
-                'ベース': 'bass',
-                'ギターソロ': 'guitar solo',
-                'ピアノソロ': 'piano solo',
-                'コーラス': 'chorus',
-                'ラップパート': 'rap part'
-            };
-
-            const generateOutput = async () => {
-                if (!songTitle) {
-                    alert('楽曲タイトルは必須です。');
-                    return;
-                }
-
-                setIsGenerating(true);
-                setGeneratedOutput(null);
-
-                await new Promise(resolve => setTimeout(resolve, 2000));
-
-                const translateJaToEn = (text) => {
-                    if (!text) return '';
-                    let translatedText = text;
-                    for (const [ja, en] of Object.entries(jaToEn)) {
-                        const regex = new RegExp(ja, 'g');
-                        translatedText = translatedText.replace(regex, en);
-                    }
-                    return translatedText.replace(/、/g, ', ');
-                };
-
-                const styleTags = [
-                    translateJaToEn(genre),
-                    translateJaToEn(mood),
-                    translateJaToEn(customRequirements)
-                ].filter(Boolean).join(', ');
-
-                const baseLyrics = `[Verse 1]
-${songTitle}という名のメロディが心に響く。
-風のように過ぎ去った日々に、思い出は色褪せることなく光ってる。
-
-[Chorus]
-あの夏の空の下で、君と過ごした時間が
-永遠に続くような気がした。
-${songTitle}、忘れはしない。
-
-[Verse 2]
-街角で聞こえる音楽が、あの頃を思い出させる。
-変わらない想いを胸に、今日もまた歩いていこう。
-
-[Outro]
-時が流れても、心の中に生き続ける。
-大切な記憶たちよ、ありがとう。
-`;
-
-                let dynamicLyrics = baseLyrics;
-
-                if (customRequirements.includes('ピアノ')) {
-                    dynamicLyrics = dynamicLyrics.replace('心に響く', '心に響くピアノの音色が');
-                }
-                if (customRequirements.includes('ギターソロ')) {
-                    dynamicLyrics = dynamicLyrics.replace('忘れはしない', '忘れはしない。熱いギターソロが響く。');
-                }
-                if (customRequirements.includes('コーラス')) {
-                    dynamicLyrics = dynamicLyrics.replace('[Chorus]', '[Chorus]\n（La la la...）');
-                }
-                if (customRequirements.includes('ラップパート')) {
-                    dynamicLyrics += `\n\n[Rap Part]
-Yo, this is a part for all my memories,
-Gonna drop a beat for all those summer days,
-'cause you know the title is ${songTitle}, it's forever, yo.`;
-                }
+                <div class="form-group">
+                    <label for="genre">ジャンル</label>
+                    <select id="genre">
+                        <option value="">ジャンルを選択</option>
+                        <option value="j-pop">J-POP</option>
+                        <option value="rock">ロック</option>
+                        <option value="ballad">バラード</option>
+                        <option value="electronic">エレクトロニック</option>
+                        <option value="folk">フォーク</option>
+                        <option value="jazz">ジャズ</option>
+                        <option value="hip-hop">ヒップホップ</option>
+                        <option value="reggae">レゲエ</option>
+                        <option value="country">カントリー</option>
+                        <option value="blues">ブルース</option>
+                        <option value="funk">ファンク</option>
+                        <option value="classical">クラシック</option>
+                    </select>
+                </div>
                 
-                setGeneratedOutput({
-                    lyrics: dynamicLyrics,
-                    style: styleTags
-                });
-                setIsGenerating(false);
-            };
+                <div class="form-group">
+                    <label for="custom-requirements">こだわり・入れたい楽器・要素</label>
+                    <textarea id="custom-requirements" rows="4" placeholder="例：ピアノソロ、ギターソロ、オーケストラ、切ないメロディ"></textarea>
+                </div>
+            </div>
 
-            const resetForm = () => {
-                setSongTitle('');
-                setGenre('');
-                setMood('');
-                setCustomRequirements('');
-                setSongLength('standard');
-                setGeneratedOutput(null);
-            };
-
-            return (
-                <div className="min-h-screen bg-gray-100 text-gray-800 p-4 sm:p-8 flex items-center justify-center">
-                    <div className="max-w-4xl w-full bg-white p-6 sm:p-10 rounded-3xl shadow-2xl space-y-8">
-                        {/* Header */}
-                        <div className="text-center space-y-2">
-                            <h1 className="text-3xl sm:text-4xl font-extrabold text-indigo-700 tracking-tight">
-                                <Wand2 className="inline-block w-8 h-8 sm:w-10 sm:h-10 text-pink-500 mr-2 animate-pulse" />
-                                SUNO AI楽曲生成ボット
-                            </h1>
-                            <p className="text-gray-500 text-sm sm:text-base">
-                                あなたのアイデアをAIが楽曲に変換します
-                            </p>
-                        </div>
-
-                        {/* Main Form */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {/* Input Section */}
-                            <div className="space-y-6">
-                                {/* Title Input */}
-                                <div className="space-y-2">
-                                    <label htmlFor="songTitle" className="font-semibold text-gray-700 flex items-center">
-                                        <Music className="w-5 h-5 mr-1 text-indigo-500" />
-                                        楽曲タイトル <span className="text-red-500 ml-1">*</span>
-                                    </label>
-                                    <input
-                                        id="songTitle"
-                                        type="text"
-                                        placeholder="例: 夏の思い出"
-                                        value={songTitle}
-                                        onChange={(e) => setSongTitle(e.target.value)}
-                                        className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
-                                    />
-                                </div>
-
-                                {/* Genre & Mood */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label htmlFor="genre" className="font-semibold text-gray-700">ジャンル</label>
-                                        <select
-                                            id="genre"
-                                            value={genre}
-                                            onChange={(e) => setGenre(e.target.value)}
-                                            className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
-                                        >
-                                            <option value="">選択してください</option>
-                                            {genreOptions.map(option => (
-                                                <option key={option} value={option}>{option}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="mood" className="font-semibold text-gray-700">雰囲気・イメージ</label>
-                                        <select
-                                            id="mood"
-                                            value={mood}
-                                            onChange={(e) => setMood(e.target.value)}
-                                            className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
-                                        >
-                                            <option value="">選択してください</option>
-                                            {moodOptions.map(option => (
-                                                <option key={option} value={option}>{option}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {/* Custom Requirements */}
-                                <div className="space-y-2">
-                                    <label htmlFor="customRequirements" className="font-semibold text-gray-700">
-                                        こだわり・入れたい楽器・要素
-                                    </label>
-                                    <textarea
-                                        id="customRequirements"
-                                        rows="4"
-                                        placeholder="例: アコースティックギター、ピアノソロ、コーラス、優しいメロディ"
-                                        value={customRequirements}
-                                        onChange={(e) => setCustomRequirements(e.target.value)}
-                                        className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 transition resize-y"
-                                    />
-                                </div>
-
-                                {/* Song Length */}
-                                <div className="space-y-2">
-                                    <label htmlFor="songLength" className="font-semibold text-gray-700">楽曲の長さ</label>
-                                    <select
-                                        id="songLength"
-                                        value={songLength}
-                                        onChange={(e) => setSongLength(e.target.value)}
-                                        className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
-                                    >
-                                        <option value="standard">スタンダード (約1分30秒)</option>
-                                        <option value="long">ロング (約3分)</option>
-                                    </select>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex flex-col sm:flex-row gap-4">
-                                    <button
-                                        onClick={generateOutput}
-                                        disabled={isGenerating}
-                                        className={`flex-1 flex items-center justify-center p-4 rounded-xl font-bold transition-all transform ${isGenerating ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg hover:scale-105'}`}
-                                    >
-                                        {isGenerating ? (
-                                            <>
-                                                <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
-                                                生成中...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Sparkles className="w-5 h-5 mr-2" />
-                                                AI生成
-                                            </>
-                                        )}
-                                    </button>
-                                    <button
-                                        onClick={resetForm}
-                                        className="flex-1 flex items-center justify-center p-4 rounded-xl font-bold text-indigo-600 bg-white border border-indigo-600 hover:bg-indigo-50 transition-colors"
-                                    >
-                                        リセット
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Output Section */}
-                            <div className="space-y-6">
-                                {isGenerating && (
-                                    <div className="flex items-center justify-center p-8 bg-indigo-50 rounded-xl text-indigo-700 font-semibold">
-                                        <RefreshCw className="w-6 h-6 mr-3 animate-spin" />
-                                        歌詞とスタイルを生成中...
-                                    </div>
-                                )}
-
-                                {generatedOutput && (
-                                    <>
-                                        {/* Lyrics Output */}
-                                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 space-y-4">
-                                            <h3 className="text-lg font-bold text-gray-800 flex items-center">
-                                                <Music className="w-5 h-5 mr-2 text-indigo-500" />
-                                                生成された歌詞
-                                            </h3>
-                                            <div className="bg-white p-4 rounded-lg border border-gray-300 whitespace-pre-wrap text-sm text-gray-700 h-64 overflow-y-auto">
-                                                {generatedOutput.lyrics}
-                                            </div>
-                                            <button
-                                                onClick={() => navigator.clipboard.writeText(generatedOutput.lyrics)}
-                                                className="w-full bg-indigo-500 text-white font-semibold py-2 rounded-lg hover:bg-indigo-600 transition"
-                                            >
-                                                <Copy className="inline-block w-4 h-4 mr-1" />
-                                                歌詞をコピー
-                                            </button>
-                                        </div>
-
-                                        {/* Style Tag Output */}
-                                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 space-y-4">
-                                            <h3 className="text-lg font-bold text-gray-800 flex items-center">
-                                                <Sparkles className="w-5 h-5 mr-2 text-pink-500" />
-                                                SUNOスタイルタグ
-                                            </h3>
-                                            <div className="bg-white p-4 rounded-lg border border-gray-300 whitespace-pre-wrap text-sm text-gray-700 h-24 overflow-y-auto">
-                                                {generatedOutput.style}
-                                            </div>
-                                            <button
-                                                onClick={() => navigator.clipboard.writeText(generatedOutput.style)}
-                                                className="w-full bg-indigo-500 text-white font-semibold py-2 rounded-lg hover:bg-indigo-600 transition"
-                                            >
-                                                <Copy className="inline-block w-4 h-4 mr-1" />
-                                                スタイルをコピー
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-
-                                {/* Info Section */}
-                                <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
-                                    <h3 className="text-lg font-semibold text-amber-800 mb-2">🎵 使い方</h3>
-                                    <ol className="text-sm text-amber-700 space-y-2">
-                                        <li>1. 楽曲タイトルを入力（必須）</li>
-                                        <li>2. ジャンルと雰囲気を選択（任意）</li>
-                                        <li>3. こだわりや楽器の要求を入力（任意）</li>
-                                        <li>4. 楽曲の長さを選択（任意）</li>
-                                        <li>5. 「AI生成」ボタンをクリック</li>
-                                        <li>6. 生成結果をコピーしてSUNOに貼り付け</li>
-                                    </ol>
-                                </div>
-                            </div>
-                        </div>
+            <div>
+                <div class="form-group">
+                    <label>雰囲気・イメージ（複数選択可）</label>
+                    <div class="mood-grid">
+                        <div class="mood-option" data-mood="明るい">明るい</div>
+                        <div class="mood-option" data-mood="楽しい">楽しい</div>
+                        <div class="mood-option" data-mood="悲しい">悲しい</div>
+                        <div class="mood-option" data-mood="穏やか">穏やか</div>
+                        <div class="mood-option" data-mood="力強い">力強い</div>
+                        <div class="mood-option" data-mood="優しい">優しい</div>
+                        <div class="mood-option" data-mood="エネルギッシュ">エネルギッシュ</div>
+                        <div class="mood-option" data-mood="ロマンチック">ロマンチック</div>
+                        <div class="mood-option" data-mood="ミステリアス">ミステリアス</div>
+                        <div class="mood-option" data-mood="ノスタルジック">ノスタルジック</div>
                     </div>
                 </div>
-            );
+
+            </div>
+        </div>
+
+        <button class="generate-btn" onclick="generateOutput()">🎼 歌詞とスタイルを生成</button>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>AIが歌詞とスタイルを生成中です...</p>
+        </div>
+
+        <div id="results" class="results">
+            <div class="result-box">
+                <h3>📝 生成された歌詞</h3>
+                <div id="lyrics-output" class="lyrics-box"></div>
+                <button class="copy-btn" onclick="copyToClipboard('lyrics-output')">コピー</button>
+            </div>
+            <div class="result-box">
+                <h3>🎨 SUNOスタイルタグ（英語）</h3>
+                <div id="style-output" class="lyrics-box"></div>
+                <button class="copy-btn" onclick="copyToClipboard('style-output')">コピー</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const generateButton = document.querySelector('.generate-btn');
+        const loadingSection = document.getElementById('loading');
+        const resultsSection = document.getElementById('results');
+        const lyricsOutput = document.getElementById('lyrics-output');
+        const styleOutput = document.getElementById('style-output');
+
+        // 雰囲気の選択ロジック
+        document.querySelectorAll('.mood-option').forEach(option => {
+            option.addEventListener('click', () => {
+                option.classList.toggle('selected');
+            });
+        });
+
+        // 生成ボタンの処理
+        const generateOutput = async () => {
+            const songTitle = document.getElementById('title').value;
+            const genre = document.getElementById('genre').value;
+            const customRequirements = document.getElementById('custom-requirements').value;
+            const selectedMoods = Array.from(document.querySelectorAll('.mood-option.selected')).map(el => el.getAttribute('data-mood'));
+
+            if (!songTitle.trim()) {
+                alert('楽曲タイトルは必須です。');
+                return;
+            }
+
+            loadingSection.style.display = 'block';
+            resultsSection.style.display = 'none';
+            generateButton.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:3000/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        songTitle: songTitle,
+                        genre: genre,
+                        mood: selectedMoods.join(','),
+                        customRequirements: customRequirements
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('サーバーエラーが発生しました。');
+                }
+
+                const data = await response.json();
+
+                lyricsOutput.textContent = data.lyrics;
+                styleOutput.textContent = data.style;
+                resultsSection.style.display = 'grid';
+
+            } catch (error) {
+                alert('生成中にエラーが発生しました: ' + error.message);
+                console.error(error);
+                resultsSection.style.display = 'none';
+            } finally {
+                loadingSection.style.display = 'none';
+                generateButton.disabled = false;
+            }
         };
 
-        ReactDOM.render(<SunoAISongGenerator />, document.getElementById('root'));
+        // コピーボタンの処理
+        const copyToClipboard = (elementId) => {
+            const textToCopy = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    alert('クリップボードにコピーしました！');
+                })
+                .catch(err => {
+                    console.error('コピーに失敗しました', err);
+                    alert('コピーに失敗しました。手動でコピーしてください。');
+                });
+        };
     </script>
 </body>
 </html>
